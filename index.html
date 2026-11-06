@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>복불복 오락실</title>
+<meta name="description" content="스트리머 방송용 복불복 추첨 게임 모음 — 핀볼 뽑기, 감컴좀비런">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#0b0716;--panel:#160f2a;--line:rgba(255,255,255,.12);--text:#fff;--muted:#b9b0d6;--yellow:#ffd400;--pink:#ff5fa2;--cyan:#5df2ff;--green:#7ed957}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif}
+body{min-height:100vh;background:
+  radial-gradient(900px 500px at 15% -10%,rgba(255,95,162,.22),transparent 60%),
+  radial-gradient(800px 500px at 95% 10%,rgba(93,242,255,.16),transparent 60%),var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding:48px 20px 64px}
+header{margin-bottom:34px}
+.logo{font-family:'Black Han Sans',sans-serif;font-size:clamp(40px,7vw,68px);line-height:1;letter-spacing:-1px;margin:0;
+  background:linear-gradient(180deg,#fff 0%,#ffe27a 55%,#ffb020 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 #1a1410) drop-shadow(0 0 24px rgba(255,180,40,.35))}
+.sub{margin:14px 0 0;color:var(--muted);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+.card{position:relative;display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 14px 40px -10px var(--accent)}
+.thumb{aspect-ratio:4/3;background:#000 center/cover no-repeat;border-bottom:1px solid var(--line)}
+.body{padding:18px 20px 22px}
+.tag{display:inline-block;font-size:12px;font-weight:900;padding:4px 10px;border-radius:999px;background:var(--accent);color:#120a1c;margin-bottom:10px}
+.card h2{font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:30px;margin:0 0 6px}
+.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+.play{position:absolute;right:16px;top:16px;font-family:'Black Han Sans',sans-serif;font-size:16px;padding:8px 16px;border-radius:999px;background:var(--yellow);color:#1a1410;box-shadow:0 3px 0 #1a1410}
+.soon{opacity:.55;pointer-events:none}
+.soon .thumb{display:grid;place-items:center;font-family:'Black Han Sans',sans-serif;font-size:22px;color:var(--muted);background:repeating-linear-gradient(45deg,#1b1333 0 14px,#160f2a 14px 28px)}
+footer{margin-top:46px;color:#7c739a;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="logo">복불복 오락실</h1>
+    <p class="sub">방송에서 바로 쓰는 추첨 게임. 이름 넣고, 누르고, 같이 소리 지르면 끝.</p>
+  </header>
+  <main class="grid">
+    <a class="card" href="pinball.html" style="--accent:var(--cyan)">
+      <div class="thumb" style="background-image:url(img/pinball.jpg)"></div>
+      <span class="play">PLAY</span>
+      <div class="body">
+        <span class="tag">추첨</span>
+        <h2>핀볼 뽑기</h2>
+        <p>참가자 공을 떨어뜨려 순서를 뽑아요. 달달달달 라이더와 썩박궤가 판을 뒤집어 놓습니다.</p>
+      </div>
+    </a>
+    <a class="card" href="zombie.html" style="--accent:var(--green)">
+      <div class="thumb" style="background-image:url(img/zombie.jpg)"></div>
+      <span class="play">PLAY</span>
+      <div class="body">
+        <span class="tag">예측</span>
+        <h2>감컴좀비런</h2>
+        <p>좀비 떼에게 쫓기는 다섯 명. 누가 끝까지 살아남을지 맞혀보세요. 멤버마다 방해 스킬이 하나씩.</p>
+      </div>
+    </a>
+    <div class="card soon" style="--accent:var(--pink)">
+      <div class="thumb">준비 중</div>
+      <div class="body">
+        <span class="tag">곧 공개</span>
+        <h2>다음 게임</h2>
+        <p>새 게임을 만들고 있어요.</p>
+      </div>
+    </div>
+  </main>
+  <footer>© 복불복 오락실</footer>
+</div>
+</body>
+</html>
