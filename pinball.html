@@ -382,8 +382,8 @@ function tick(dt){
   const sdt=dt*timeScale;
 
   if(state!=='paused'){
-    spinners.forEach(s=>Body.setAngle(s,s.angle+s.plugin.spd*timeScale));
-    if(ring)Body.setAngle(ring,ring.angle+RING.spd*timeScale);
+    const fk=dt/16.667;spinners.forEach(s=>Body.setAngle(s,s.angle+s.plugin.spd*timeScale*fk));
+    if(ring)Body.setAngle(ring,ring.angle+RING.spd*timeScale*fk);
     movers.forEach(m=>{const p=m.plugin;p.phase+=p.spd*dt*timeScale;const nx=W/2+Math.sin(p.phase)*p.amp;Body.setVelocity(m,{x:nx-m.position.x,y:0});Body.setPosition(m,{x:nx,y:m.position.y});});Engine.update(engine,sdt/2);Engine.update(engine,sdt/2);}
 
   if(state==='running'){
@@ -444,13 +444,13 @@ function updateRider(dt,decisive){
       const x=l.dir>0?-170:W+170;
       const body=Bodies.rectangle(x,l.y+20,120,120,{density:8,frictionAir:0,inertia:Infinity,label:'rider',collisionFilter:{category:4,mask:2}});
       body.plugin={kind:'rider'};Composite.add(world,body);
-      riders.push({body,dir:l.dir,x,y:l.y,vx:l.dir*(3.1+Math.random()*.6),t:0});
+      riders.push({body,dir:l.dir,x,y:l.y,vx:l.dir*(W+340)/riderMs(),t:0});
     });
     riderWarn=null;startEngineSound();
   }
   riders.forEach(r=>{
-    r.x+=r.vx*timeScale;r.t+=dt;
-    Body.setPosition(r.body,{x:r.x,y:r.y+20});Body.setVelocity(r.body,{x:r.vx*timeScale,y:0});
+    r.x+=r.vx*dt*timeScale;r.t+=dt;
+    Body.setPosition(r.body,{x:r.x,y:r.y+20});Body.setVelocity(r.body,{x:r.vx*16.667*timeScale,y:0});
     if(Math.random()<.8)particles.push({x:r.x-r.dir*55,y:r.y+60,vx:-r.dir*(.8+Math.random()*1.6),vy:-(.4+Math.random()*1),g:-.025,life:1,dur:1000,color:Math.random()<.5?'#9a9ab8':'#d8d8ea',size:5+Math.random()*7});
   });
   riders=riders.filter(r=>{if(r.x<-200||r.x>W+200){Composite.remove(world,r.body);return false;}return true;});
@@ -485,6 +485,7 @@ function drawRider(c){
   });
 }
 function dbg(m){const e=$('sfxDbg');if(e)e.textContent=m;}
+function riderMs(){const d=$('daldal').duration;return isFinite(d)&&d>1?d*1000:3150;}
 function startEngineSound(){
   // the real 달달달달 clip (7s) plays whenever the riders appear
   if(!$('sound').checked)return;
@@ -772,6 +773,7 @@ $('start').onclick=()=>{ensureAudio();
   if(bgm.paused)bgmPlay();
   if(state==='done')build();
   if(!balls.length){build();if(!balls.length)return;}
+  nextRiderAt=performance.now()+4000;nextSabakAt=performance.now()+9000;
   Composite.remove(world,gate);setState('running');};
 $('reset').onclick=()=>build();
 $('again').onclick=()=>{build();$('shuffle').click();};
