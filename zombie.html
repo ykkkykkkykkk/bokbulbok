@@ -165,6 +165,7 @@ let dpr=Math.min(window.devicePixelRatio||1,2);
    Screen: sx = CX + x*F/dz ; sy = HORIZON + (CAM_H-h)*F/dz ; scale = F/dz, dz = camD - d.                            */
 const W=640,VH=480,CX=W/2,F=330,CAM_H=120,HORIZON=VH*.40,ROAD=150,SIDEWALK=95,CAM_AHEAD=330;
 let runners=[],infected=[],obstacles=[],particles=[],confetti=[],texts=[];
+let plHorde=0;
 let state='ready',winnerDone=false,last=0,timeScale=1,tense=false;
 let horde={d:0,speed:0,mob:[]},camD=0,camX=0,shakeAmt=0,shk={x:0,y:0},impactT=0,grain=null,cutin=null,freezeT=0,skillSlow=0,swingFx=null,impactFx=[],skillObjs=[],lastSkillAt=0,viewZ=1,viewOX=0,viewOY=0,fovPunch=0,caption=null,nextCaptionAt=0,elapsed=0,audio=null;
 const SPR=new Image();SPR.src='assets/gamcom5_run.png';const SPR_N=9,SPR_W=424,SPR_H=358;
@@ -191,6 +192,7 @@ function build(){
   horde={d:-380,speed:2.6,mob:[]};
   for(let i=0;i<8;i++){horde.mob.push({x:(-ROAD+30)+(ROAD*2-60)*((i+.5)/8)+(Math.random()-.5)*30,dd:-Math.random()*90,ph:Math.random()*6,s:1.05+Math.random()*.25,skin:['#8fcf6a','#79b85a','#a3d97a','#b5e28a'][i%4]});}
   camD=Math.max(...runners.map(r=>r.d))+CAM_AHEAD;camX=0;
+  plHorde=0;window.PL_LIVE&&PL_LIVE.resetRound&&$('winner').hidden===false&&PL_LIVE.resetRound();
   $('count').textContent=runners.length;renderResults();setState('ready');$('winner').hidden=true;
   spawnObstacles();
 }
@@ -224,7 +226,7 @@ function tick(dt){
 
   if(state==='running'){
     elapsed+=dt*timeScale;
-    horde.speed=2.6+elapsed/1000*.022+infected.length*.02;
+    horde.speed=(2.6+elapsed/1000*.022+infected.length*.02)*(plHorde>0?1.4:1);if(plHorde>0){plHorde-=dt;if(Math.random()<.3)puff(horde.mob[0]?horde.mob[0].x:0,horde.d+40,2,'#ff4d4d');}
     horde.d+=horde.speed*f;
     horde.mob.forEach(m=>{m.ph+=dt/170*timeScale;});
 
@@ -1076,7 +1078,7 @@ function drawSkillTitle(text,slab,ix,iy,ta){
 
 /* ---------- winner ---------- */
 function announce(r,rank,survivor){
-  setTense(false);$('winEyebrow').textContent=survivor?'최후의 생존자':'당첨';$('winName').textContent=r.name;$('winName').style.color=survivor?r.color:'#7ed957';
+  setTimeout(()=>window.PL_LIVE&&PL_LIVE.result(r.name),900);setTense(false);$('winEyebrow').textContent=survivor?'최후의 생존자':'당첨';$('winName').textContent=r.name;$('winName').style.color=survivor?r.color:'#7ed957';
   const guess=$('guess').value;let meta=survivor?'끝까지 안 물림':rank+'번째 감염';
   if(guess){meta+=guess===r.name?'  ·  예측 적중!':'  ·  예측 실패 ('+guess+')';}
   $('winMeta').textContent=meta;$('winner').hidden=false;
@@ -1113,10 +1115,36 @@ $('fs').onclick=()=>{const el=$('screen');if(document.fullscreenElement){documen
 document.addEventListener('fullscreenchange',()=>setTimeout(resize,50));
 
 function loop(now){const dt=Math.min(32,now-(last||now));last=now;tick(dt);draw();drawConfetti(dt);groanTick();requestAnimationFrame(loop);}
+
+/* ---------- 방송 모드 연결 (assets/live.js) ---------- */
+window.PL_GAME={
+  id:'zombie',screen:$('screen'),predict:true,resultShowing:()=>!$('winner').hidden,
+  tiers:[
+    {id:'sprint',n:10,label:'응원 전력질주',target:true},
+    {id:'trip',n:30,label:'꽈당 시키기',target:true},
+    {id:'horde',n:50,label:'좀비 폭주 10초'},
+    {id:'skill',n:100,label:'스킬 즉시 발동',target:true},
+  ],
+  participants:()=>ROSTER.map(r=>r.name),
+  run(id,o){
+    if(state!=='running')return 'later';
+    if(id==='horde'){plHorde=10000*(o.mult||1);shakeScreen();beep(70,.6,'sawtooth',.2);for(const r of runners)if(r.alive){texts.push({r,text:'좀비 폭주!',color:'#ff4d4d',life:1});break;}return true;}
+    const r=runners.find(x=>x.name===o.target);
+    if(!r||!r.alive)return true;
+    if(id==='sprint'){r.sprint=2600*(o.mult||1);r.trip=0;r.stun=0;texts.push({r,text:o.donor+'님 응원! 전력질주',color:'#ffd400',life:1.2});sweep(400,1200,.25,'square',.08);return true;}
+    if(id==='trip'){tripRunner(r,o.donor+'님이 걸었다!');r.trip*=(o.mult||1);shakeScreen();return true;}
+    if(id==='skill'){
+      if(runners.some(x=>x.sk))return 'later';
+      const S=SKILLS[r.key];if(!S)return true;
+      r.skillUsed=true;r.sk={t:0,hit:false,type:r.key};skillSlow=S.slow;lastSkillAt=performance.now();S.start&&S.start(r);
+      texts.push({r,text:o.donor+'님의 스킬 지원!',color:'#ff2d95',life:1.2});return true;}
+    return true;
+  },
+};
 resize();build();requestAnimationFrame(loop);
 })();
 </script>
-
+<script src="assets/live.js"></script>
 <a href="./" style="position:fixed;right:12px;bottom:12px;z-index:9999;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:700 13px 'Noto Sans KR',sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.25)">← 게임 목록</a>
 </body>
 </html>

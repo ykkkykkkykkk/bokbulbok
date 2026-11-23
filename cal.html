@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>방송 달력 · 스마</title>
+<meta name="description" content="스트리머 방송 일정 공지 달력과 시청자가 함께 채우는 게임 출시일 달력. 링크 하나로 공유하고 OBS에도 띄울 수 있어요.">
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<script src="assets/config.js"></script>
+<style>
+:root{--bg:#0b0716;--panel:#160f2a;--panel2:#1e1538;--line:rgba(255,255,255,.12);--text:#fff;--muted:#b9b0d6;--yellow:#ffd400;--pink:#ff5fa2;--cyan:#5df2ff;--green:#7ed957;--red:#ff3b30;--orange:#ff9a3c}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif}
+body{min-height:100vh;background:radial-gradient(900px 500px at 10% -10%,rgba(255,95,162,.18),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(93,242,255,.12),transparent 60%),var(--bg)}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 16px 70px}
+.topnav{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.topnav a.home{font-family:'Black Han Sans',sans-serif;font-size:20px;text-decoration:none;color:var(--yellow)}
+.topnav .sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:0;border-radius:12px;background:var(--yellow);color:#1a1410;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #8a7200;text-decoration:none;white-space:nowrap}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.g{background:#2a1d48;color:#fff;box-shadow:0 3px 0 #120a22}
+.btn.p{background:var(--pink);color:#fff;box-shadow:0 3px 0 #8a0048}
+.btn.c{background:var(--cyan);color:#06222a;box-shadow:0 3px 0 #1a7c88}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:9px}
+.btn:disabled{opacity:.5;cursor:default}
+h1.logo{font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:clamp(34px,6vw,54px);line-height:1.05;margin:0;background:linear-gradient(180deg,#fff 0%,#ffe27a 55%,#ffb020 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #1a1410)}
+.lead{color:var(--muted);font-size:15px;line-height:1.65;margin:12px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px}
+label.f{display:block;font-size:12.5px;font-weight:900;color:var(--muted);margin:0 0 5px}
+.in{width:100%;padding:11px 12px;border-radius:12px;border:2px solid #3b2d63;background:#110a20;outline:none;font-size:15px;font-weight:500}
+.in:focus{border-color:var(--yellow)}
+textarea.in{min-height:70px;resize:vertical}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.fld{margin-bottom:12px}
+.hint{font-size:12.5px;color:#9c92c2;line-height:1.55;margin:6px 0 0}
+.err{color:#ff8080;font-size:13px;font-weight:700;min-height:18px;margin:6px 0 0}
+
+/* landing */
+.land{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}
+.feats{display:grid;gap:12px;margin-top:22px}
+.feat{display:flex;gap:12px;padding:14px;border-radius:16px;background:var(--panel2);border:1px solid var(--line)}
+.feat i{flex:none;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-style:normal;font-family:'Black Han Sans',sans-serif;color:#120a1c;background:var(--c)}
+.feat b{display:block;font-size:15px;margin-bottom:2px}
+.feat span{font-size:13px;color:var(--muted);line-height:1.5}
+.keybox{margin-top:12px;padding:14px;border-radius:14px;background:#2a1408;border:2px solid var(--orange)}
+.keybox code{display:block;margin:8px 0;padding:10px;border-radius:10px;background:#120a04;font-size:16px;font-weight:900;letter-spacing:1px;color:var(--yellow);word-break:break-all}
+
+/* channel */
+.chead{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.chead .t{flex:1;min-width:240px}
+.chead .t small{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px}
+.chead .acts{display:flex;gap:8px;flex-wrap:wrap}
+.adminbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,rgba(255,212,0,.16),rgba(255,95,162,.12));border:1px solid rgba(255,212,0,.35);font-size:13.5px;font-weight:700}
+.adminbar b{color:var(--yellow)}
+.adminbar .sp{flex:1}
+.next{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;margin-bottom:18px;padding:16px 20px;border-radius:20px;background:linear-gradient(120deg,#2a1150,#1a0f33);border:1px solid rgba(255,95,162,.35)}
+.next .live{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--pink);font-family:'Black Han Sans',sans-serif;font-size:13px;line-height:1.1;text-align:center;box-shadow:0 0 22px rgba(255,95,162,.55)}
+.next h3{margin:0;font-size:19px;font-weight:900}
+.next p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
+.next .cd{font-family:'Black Han Sans',sans-serif;font-size:clamp(20px,4vw,30px);color:var(--yellow);white-space:nowrap;text-align:right}
+.next .cd small{display:block;font-family:'Noto Sans KR';font-size:11.5px;color:var(--muted);font-weight:700}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tab{flex:1;max-width:260px;padding:12px 16px;border-radius:14px;border:2px solid var(--line);background:var(--panel);cursor:pointer;text-align:left;position:relative}
+.tab b{display:block;font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:19px}
+.tab span{font-size:12px;color:var(--muted);font-weight:700}
+.tab[aria-selected=true]{border-color:var(--c);background:linear-gradient(180deg,rgba(255,255,255,.06),transparent),var(--panel2);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent)}
+.tab[aria-selected=true] b{color:var(--c)}
+.tab .badge{position:absolute;right:10px;top:10px;padding:2px 8px;border-radius:999px;background:var(--red);font-size:11px;font-weight:900;color:#fff}
+.main{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.cal{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px}
+.calhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.calhead h2{flex:1;margin:0;font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:24px}
+.nav{width:38px;height:38px;border-radius:11px;border:0;background:#2a1d48;cursor:pointer;font-size:18px;font-weight:900}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-size:12px;font-weight:900;color:var(--muted);padding:4px 0}
+.dow:first-child{color:#ff8080}.dow:last-child{color:#7cc4ff}
+.day{position:relative;min-height:96px;padding:6px 5px 5px;border-radius:12px;background:#120b22;border:2px solid transparent;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.day:hover{border-color:#3b2d63}
+.day.out{opacity:.35}
+.day.today{border-color:var(--yellow)}
+.day.sel{border-color:var(--c);background:#1a1030}
+.day .n{font-size:12.5px;font-weight:900;color:#d8d0f5}
+.day.sun .n{color:#ff8a8a}.day.sat .n{color:#8ac8ff}
+.day.today .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--yellow);color:#1a1410}
+.chip{display:block;padding:2px 6px;border-radius:6px;font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#120a1c;background:var(--k,#5df2ff)}
+.chip.more{background:transparent;color:var(--muted);padding:0 4px}
+.side{display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px}
+.panel h3{margin:0 0 10px;font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:19px;display:flex;align-items:center;gap:8px}
+.panel h3 .sp{flex:1}
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line)}
+.item.pin{border-color:rgba(255,212,0,.55);background:linear-gradient(180deg,rgba(255,212,0,.08),transparent),var(--panel2)}
+.item .k{padding:3px 8px;border-radius:8px;font-size:11px;font-weight:900;color:#120a1c;background:var(--k);white-space:nowrap;margin-top:2px}
+.item .b{min-width:0}
+.item .b b{display:block;font-size:14.5px;word-break:break-word}
+.item .b small{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45;word-break:break-word}
+.item .b a{color:var(--cyan);font-size:12px;font-weight:700;word-break:break-all}
+.item .r{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.like{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;border:2px solid #4a3a7a;background:#160f2a;cursor:pointer;font-size:12px;font-weight:900;white-space:nowrap}
+.like.on{border-color:var(--pink);background:rgba(255,95,162,.18);color:#ffb3d5}
+.mini{border:0;background:none;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;padding:2px 4px;text-decoration:underline}
+.empty{padding:18px;border-radius:14px;border:2px dashed #3b2d63;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.legend span:before{content:'';width:10px;height:10px;border-radius:3px;background:var(--k)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{padding:7px 11px;border-radius:10px;border:2px solid #3b2d63;background:#110a20;font-weight:900;font-size:13px;cursor:pointer}
+.seg button[aria-pressed=true]{border-color:var(--k);background:color-mix(in srgb,var(--k) 22%,#110a20)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;padding:12px 18px;border-radius:14px;background:#2a1d48;border:1px solid var(--line);font-weight:900;font-size:14px;z-index:99;transition:.25s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(5,2,12,.7);backdrop-filter:blur(4px)}
+.modal .card{width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.modal h3{margin:0 0 14px;font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:22px}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+footer{margin-top:40px;color:#7c739a;font-size:12px}
+
+/* OBS overlay */
+body.ov{background:transparent!important}
+body.ov .wrap{display:none}
+.ovbox{display:none}
+body.ov .ovbox{display:block;width:420px;padding:14px 16px;border-radius:20px;background:rgba(14,8,30,.86);border:2px solid var(--pink);margin:10px;font-family:'Noto Sans KR',sans-serif}
+.ovbox h4{margin:0 0 10px;font-family:'Black Han Sans',sans-serif;font-weight:400;font-size:22px;color:var(--yellow)}
+.ovrow{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(255,255,255,.1);font-weight:900}
+.ovrow:first-of-type{border-top:0}
+.ovrow .d{font-size:13px;color:var(--cyan);line-height:1.25}
+.ovrow .d small{display:block;color:var(--muted);font-size:11.5px}
+.ovrow .tt{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovrow .tt em{font-style:normal;font-size:11px;padding:2px 6px;border-radius:6px;background:var(--k);color:#120a1c;margin-right:6px;vertical-align:2px}
+
+@media (max-width:900px){.main{grid-template-columns:1fr}.land{grid-template-columns:1fr}}
+@media (max-width:640px){
+ .day{min-height:58px;padding:4px 3px}
+ .day .chip{font-size:0;height:6px;padding:0;border-radius:3px}
+ .day .chip.more{display:none}
+ .grid{gap:3px}
+ .next{grid-template-columns:auto 1fr}.next .cd{grid-column:1/-1;text-align:left}
+ .tab{padding:10px 12px}.tab b{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="loading">불러오는 중…</div></div>
+<div class="ovbox" id="ovbox"></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal" id="modal" hidden><div class="card" id="modalCard"></div></div>
+
+<script>
+(function(){
+const API=(new URLSearchParams(location.search).get('api')||window.PICKLAB_API||'').replace(/\/$/,'');
+const q=new URLSearchParams(location.search);
+let slug=(q.get('c')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+const OV=q.get('o')==='1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KS={'방송':'#5df2ff','합방':'#ff5fa2','휴방':'#8a83a8','이벤트':'#ffd400','기타':'#b388ff'};
+const KG={'출시':'#7ed957','업데이트':'#5df2ff','이벤트':'#ffd400','얼리액세스':'#ff9a3c','기타':'#b388ff'};
+const DOW=['일','월','화','수','목','금','토'];
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const today=()=>ymd(new Date());
+const fmtD=s=>{const d=parse(s);return `${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2200);}
+async function api(path,opt={}){
+  if(!API)throw new Error('서버 주소가 아직 설정되지 않았어요 (assets/config.js)');
+  const h={'Content-Type':'application/json'};if(opt.key)h['X-Key']=opt.key;
+  let r;try{r=await fetch(API+'/api'+path,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined});}catch(e){throw new Error('서버에 연결하지 못했어요. 잠시 후 다시 해주세요');}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;
+}
+function modal(html,onMount){$('#modalCard').innerHTML=html;$('#modal').hidden=false;onMount&&onMount($('#modalCard'));const f=$('#modalCard').querySelector('input,select,textarea');f&&setTimeout(()=>f.focus(),30);}
+function closeModal(){$('#modal').hidden=true;}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal();});
+async function copy(t,msg){try{await navigator.clipboard.writeText(t);toast(msg||'복사했어요');}catch(e){prompt('복사해서 쓰세요',t);}}
+
+/* ---------- 관리 키 ---------- */
+if(slug&&location.hash.startsWith('#k=')){store.set('pl.cal.key.'+slug,decodeURIComponent(location.hash.slice(3)));history.replaceState(null,'',location.pathname+location.search);}
+const key=()=>slug?store.get('pl.cal.key.'+slug):null;
+
+/* ---------- 첫 화면: 달력 만들기 ---------- */
+function landing(){
+  const mine=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('pl.cal.key.'))mine.push(k.slice(11));}}catch(e){}
+  $('#app').innerHTML=`<nav class="topnav"><a class="home" href="./">← 스마 마을로</a></nav>
+  <div class="land">
+   <div>
+    <h1 class="logo">방송 달력</h1>
+    <p class="lead">링크 하나로 쓰는 스트리머 달력이에요. <b style="color:#fff">방송 일정</b>은 스트리머가 올려서 공지하고, <b style="color:#fff">게임 공유 달력</b>은 시청자들이 신작 출시일과 게임 이벤트를 직접 채워요.</p>
+    <div class="feats">
+     <div class="feat" style="--c:var(--cyan)"><i>일</i><div><b>방송 일정 공지</b><span>방송·합방·휴방을 달력에 올리면 시청자는 링크로 바로 확인해요. 다음 방송까지 남은 시간도 떠요.</span></div></div>
+     <div class="feat" style="--c:var(--green)"><i>공</i><div><b>시청자 게임 공유</b><span>시청자가 "12/4 OO 출시"처럼 올리고, 다른 시청자는 '기대돼요'를 눌러요. 많이 눌린 게임이 위로 올라와요.</span></div></div>
+     <div class="feat" style="--c:var(--yellow)"><i>핀</i><div><b>스트리머가 고정·정리</b><span>방송에서 할 게임은 고정하고, 이상한 글은 지워요. 회원가입 없이 관리 키 하나로 관리해요.</span></div></div>
+     <div class="feat" style="--c:var(--pink)"><i>OBS</i><div><b>방송 화면에 일정 띄우기</b><span>OBS 브라우저 소스로 '다가오는 방송' 위젯을 띄울 수 있어요.</span></div></div>
+    </div>
+   </div>
+   <div class="card">
+    <h2 style="margin:0 0 14px;font-family:'Black Han Sans';font-weight:400;font-size:24px">내 달력 만들기</h2>
+    <div class="fld"><label class="f" for="mkName">방송 이름</label><input class="in" id="mkName" maxlength="30" placeholder="예: 영킹의 오락실"></div>
+    <div class="fld"><label class="f" for="mkSlug">달력 주소</label><input class="in" id="mkSlug" maxlength="24" placeholder="영문 소문자·숫자 (예: youngking)" autocapitalize="off" spellcheck="false"><p class="hint" id="mkPrev">picklab.shop/cal.html?c=…</p></div>
+    <div class="fld"><label class="f" for="mkSoop">방송국 링크 (선택)</label><input class="in" id="mkSoop" maxlength="200" placeholder="SOOP 방송국 주소를 붙여넣기"></div>
+    <button class="btn" id="mkGo" style="width:100%">달력 만들기</button>
+    <p class="err" id="mkErr"></p>
+    <div id="mkDone"></div>
+    ${mine.length?`<div style="margin-top:14px"><label class="f">이 기기에서 관리 중인 달력</label><div class="seg">${mine.map(s=>`<a class="btn g sm" href="?c=${esc(s)}">${esc(s)}</a>`).join('')}</div></div>`:''}
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <label class="f" for="goSlug">다른 달력 보러 가기</label>
+    <div class="row"><input class="in" id="goSlug" placeholder="달력 주소" autocapitalize="off"><button class="btn g" id="goBtn" style="flex:none">열기</button></div>
+   </div>
+  </div><footer>© 스마 · 스트리머 마을</footer>`;
+  const sl=$('#mkSlug');sl.addEventListener('input',()=>{sl.value=sl.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');$('#mkPrev').textContent='picklab.shop/cal.html?c='+(sl.value||'…');});
+  $('#goBtn').onclick=()=>{const v=$('#goSlug').value.trim().toLowerCase();if(v)location.search='?c='+encodeURIComponent(v);};
+  $('#goSlug').addEventListener('keydown',e=>{if(e.key==='Enter')$('#goBtn').click();});
+  $('#mkGo').onclick=async()=>{
+    const b=$('#mkGo');b.disabled=true;$('#mkErr').textContent='';
+    try{
+      const r=await api('/channels',{method:'POST',body:{name:$('#mkName').value,slug:sl.value,soop:$('#mkSoop').value.trim()}});
+      store.set('pl.cal.key.'+r.slug,r.key);
+      const adminUrl=location.origin+location.pathname+'?c='+r.slug+'#k='+r.key;
+      $('#mkDone').innerHTML=`<div class="keybox"><b>달력이 만들어졌어요! 관리 키를 꼭 저장해 두세요.</b><code>${esc(r.key)}</code>
+       <p class="hint" style="color:#ffcf9a">이 키가 있어야 일정을 올리고 글을 지울 수 있어요. 다시 보여줄 수 없으니 메모장 같은 데 저장해 두세요. 다른 컴퓨터에서는 아래 관리 링크로 열면 돼요.</p>
+       <div class="row" style="margin-top:8px"><button class="btn g sm" id="cpKey">키 복사</button><button class="btn g sm" id="cpAdm">관리 링크 복사</button><a class="btn sm" href="?c=${esc(r.slug)}">내 달력 열기</a></div></div>`;
+      $('#cpKey').onclick=()=>copy(r.key,'관리 키를 복사했어요');$('#cpAdm').onclick=()=>copy(adminUrl,'관리 링크를 복사했어요 (남에게 보내면 안 돼요)');
+      b.textContent='만들었어요';
+    }catch(e){$('#mkErr').textContent=e.message;b.disabled=false;}
+  };
+}
+
+/* ---------- 달력 화면 ---------- */
+let CH=null,tab=store.get('pl.cal.tab')==='games'?'games':'schedule',cur=new Date(),sel=today(),data={schedule:[],games:[]},liked=new Set(JSON.parse(store.get('pl.cal.liked')||'[]')),isAdmin=false,newGames=0;
+cur=new Date(cur.getFullYear(),cur.getMonth(),1);
+function range(){const s=new Date(cur.getFullYear(),cur.getMonth(),1);s.setDate(1-s.getDay());const e=new Date(s);e.setDate(s.getDate()+41);return [ymd(s),ymd(e),s];}
+async function loadMonth(){const [a,b]=range();try{data=await api(`/channels/${slug}/events?from=${a}&to=${b}`);}catch(e){toast(e.message);}render();}
+async function loadNext(){try{const u=await api(`/channels/${slug}/upcoming?today=${today()}`);renderNext(u.schedule);newGames=u.newGames;renderTabs();return u;}catch(e){return null;}}
+
+async function channel(){
+  try{CH=await api('/channels/'+slug);}catch(e){
+    $('#app').innerHTML=`<nav class="topnav"><a class="home" href="./">← 스마 마을로</a></nav><div class="card" style="text-align:center;padding:40px 20px"><h2 style="font-family:'Black Han Sans';font-weight:400;margin:0 0 8px">달력을 찾을 수 없어요</h2><p class="lead">${esc(e.message)}</p><a class="btn" href="cal.html" style="margin-top:16px">달력 만들러 가기</a></div>`;return;}
+  if(key()){try{isAdmin=(await api(`/channels/${slug}/verify`,{method:'POST',key:key()})).ok;}catch(e){}}
+  document.title=CH.name+' 방송 달력 · 스마';
+  shell();await Promise.all([loadMonth(),loadNext()]);
+  setInterval(tickCd,1000);
+}
+function shell(){
+  $('#app').innerHTML=`<nav class="topnav"><a class="home" href="./">← 스마 마을로</a><span class="sp"></span>${isAdmin?'':`<button class="mini" id="loginBtn">스트리머 로그인</button>`}</nav>
+  <div class="chead"><div class="t"><small>방송 달력 · picklab.shop</small><h1 class="logo">${esc(CH.name)}</h1></div>
+   <div class="acts">${CH.soop?`<a class="btn g" href="${esc(CH.soop)}" target="_blank" rel="noopener">방송국 가기</a>`:''}<button class="btn" id="shareBtn">달력 링크 복사</button></div></div>
+  ${isAdmin?`<div class="adminbar"><span>내 달력 관리 중 · <b>시청자에게는 이 줄이 안 보여요</b></span><span class="sp"></span><button class="btn sm" id="addS">+ 방송 일정</button><button class="btn g sm" id="ovBtn">OBS 위젯</button><button class="btn g sm" id="setBtn">설정</button><button class="mini" id="logout">로그아웃</button></div>`:''}
+  <div class="next" id="next" hidden></div>
+  <div class="tabs" role="tablist">
+   <button class="tab" role="tab" data-t="schedule" style="--c:var(--cyan)"><b>방송 일정</b><span>${isAdmin?'내가 올려서 공지':'스트리머가 올린 일정'}</span></button>
+   <button class="tab" role="tab" data-t="games" style="--c:var(--green)"><b>게임 공유 달력</b><span>시청자가 채우는 출시일·이벤트</span></button>
+  </div>
+  <div class="main">
+   <section class="cal"><div class="calhead"><button class="nav" id="prev" aria-label="이전 달">‹</button><h2 id="mTitle"></h2><button class="btn g sm" id="todayBtn">오늘</button><button class="nav" id="nextM" aria-label="다음 달">›</button></div>
+    <div class="grid" id="grid"></div><div class="legend" id="legend"></div></section>
+   <aside class="side"><div class="panel" id="dayPanel"></div><div class="panel" id="upPanel"></div></aside>
+  </div><footer>© 스마 · 스트리머 마을 · 시청자 글은 스트리머가 지울 수 있어요</footer>`;
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.t;store.set('pl.cal.tab',tab);render();});
+  $('#prev').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);loadMonth();};
+  $('#nextM').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);loadMonth();};
+  $('#todayBtn').onclick=()=>{const t=new Date();cur=new Date(t.getFullYear(),t.getMonth(),1);sel=today();loadMonth();};
+  $('#shareBtn').onclick=()=>copy(location.origin+location.pathname+'?c='+slug,'달력 링크를 복사했어요. 방송 공지에 붙여넣으세요');
+  if($('#loginBtn'))$('#loginBtn').onclick=login;
+  if(isAdmin){$('#addS').onclick=()=>editSched(null);$('#ovBtn').onclick=ovInfo;$('#setBtn').onclick=settings;$('#logout').onclick=()=>{store.del('pl.cal.key.'+slug);location.reload();};}
+}
+function renderTabs(){document.querySelectorAll('.tab').forEach(b=>{b.setAttribute('aria-selected',b.dataset.t===tab);const old=b.querySelector('.badge');old&&old.remove();if(b.dataset.t==='games'&&isAdmin&&newGames>0)b.insertAdjacentHTML('beforeend',`<span class="badge">이번 주 새 글 ${newGames}</span>`);});}
+function render(){
+  renderTabs();
+  const [a,,start]=range();const items=tab==='schedule'?data.schedule:data.games,KC=tab==='schedule'?KS:KG;
+  $('#mTitle').textContent=`${cur.getFullYear()}년 ${cur.getMonth()+1}월`;
+  const by={};items.forEach(i=>(by[i.date]=by[i.date]||[]).push(i));
+  let h=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=ymd(d),list=by[k]||[];
+    const cls=['day',d.getMonth()!==cur.getMonth()?'out':'',k===today()?'today':'',k===sel?'sel':'',d.getDay()===0?'sun':'',d.getDay()===6?'sat':''].join(' ');
+    const chips=list.slice(0,3).map(x=>`<span class="chip" style="--k:${KC[x.kind]||'#5df2ff'}">${tab==='schedule'&&x.time?esc(x.time)+' ':''}${x.pinned?'📌':''}${esc(x.title)}</span>`).join('')+(list.length>3?`<span class="chip more">+${list.length-3}</span>`:'');
+    h+=`<button class="${cls}" data-d="${k}" aria-label="${fmtD(k)} ${list.length}개"><span class="n">${d.getDate()}</span>${chips}</button>`;}
+  $('#grid').innerHTML=h;$('#grid').style.setProperty('--c',tab==='schedule'?'var(--cyan)':'var(--green)');
+  $('#grid').querySelectorAll('.day').forEach(b=>b.onclick=()=>{sel=b.dataset.d;const d=parse(sel);if(d.getMonth()!==cur.getMonth()){cur=new Date(d.getFullYear(),d.getMonth(),1);loadMonth();}else render();if(innerWidth<900)$('#dayPanel').scrollIntoView({behavior:'smooth',block:'start'});});
+  $('#legend').innerHTML=Object.entries(KC).map(([k,c])=>`<span style="--k:${c}">${k}</span>`).join('');
+  renderDay(by[sel]||[]);renderUp(items);
+}
+function itemHTML(x){
+  const KC=tab==='schedule'?KS:KG;
+  if(tab==='schedule')return `<div class="item"><span class="k" style="--k:${KC[x.kind]}">${esc(x.kind)}</span><div class="b"><b>${x.time?esc(x.time)+' · ':''}${esc(x.title)}</b>${x.note?`<small>${esc(x.note)}</small>`:''}</div><div class="r">${isAdmin?`<button class="mini" data-es="${x.id}">수정</button><button class="mini" data-ds="${x.id}">삭제</button>`:''}</div></div>`;
+  return `<div class="item${x.pinned?' pin':''}"><span class="k" style="--k:${KC[x.kind]}">${esc(x.kind)}</span><div class="b"><b>${x.pinned?'📌 ':''}${esc(x.title)}</b><small>${esc(x.nick)}님이 공유${x.note?' · '+esc(x.note):''}</small>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener nofollow ugc">${esc(x.link.replace(/^https?:\/\//,'').slice(0,40))}</a>`:''}</div><div class="r"><button class="like${liked.has(x.id)?' on':''}" data-like="${x.id}">기대돼요 ${x.likes}</button>${isAdmin?`<button class="mini" data-pin="${x.id}" data-p="${x.pinned?0:1}">${x.pinned?'고정 해제':'방송에서 할래요'}</button><button class="mini" data-dg="${x.id}">삭제</button>`:''}</div></div>`;
+}
+function renderDay(list){
+  const canAdd=tab==='games'||isAdmin;
+  $('#dayPanel').innerHTML=`<h3>${fmtD(sel)}<span class="sp"></span>${canAdd?`<button class="btn sm ${tab==='games'?'c':''}" id="addHere">${tab==='games'?'+ 게임 공유':'+ 일정'}</button>`:''}</h3>
+   <div class="list">${list.length?list.map(itemHTML).join(''):`<div class="empty">${tab==='schedule'?(isAdmin?'이 날은 일정이 없어요. 위 버튼으로 올려보세요.':'이 날은 공지된 방송 일정이 없어요.'):'아직 공유된 게임이 없어요.<br>신작 출시일이나 이벤트를 알고 있다면 올려주세요!'}</div>`}</div>`;
+  const ah=$('#addHere');if(ah)ah.onclick=()=>tab==='games'?shareGame(sel):editSched({date:sel});
+  bindItems($('#dayPanel'));
+}
+function renderUp(items){
+  const t=today(),up=items.filter(x=>x.date>=t).slice(0,6);
+  const label=tab==='schedule'?'다가오는 방송':'다가오는 출시·이벤트';
+  $('#upPanel').innerHTML=`<h3>${label}</h3><div class="list">${up.length?up.map(x=>`<div class="item" style="grid-template-columns:62px 1fr auto;cursor:pointer" data-go="${x.date}"><span style="font-size:12px;font-weight:900;color:var(--cyan);line-height:1.3">${parse(x.date).getMonth()+1}/${parse(x.date).getDate()}<br><span style="color:var(--muted)">${DOW[parse(x.date).getDay()]}</span></span><div class="b"><b>${tab==='schedule'&&x.time?esc(x.time)+' · ':''}${esc(x.title)}</b><small>${esc(x.kind)}${tab==='games'?' · 기대돼요 '+x.likes:''}</small></div><span></span></div>`).join(''):`<div class="empty">이번 달에는 아직 없어요.</div>`}</div>`;
+  $('#upPanel').querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>{sel=el.dataset.go;render();});
+}
+function bindItems(root){
+  root.querySelectorAll('[data-like]').forEach(b=>b.onclick=async()=>{const id=+b.dataset.like;try{const r=await api(`/channels/${slug}/games/${id}/like`,{method:'POST'});liked.add(id);store.set('pl.cal.liked',JSON.stringify([...liked].slice(-500)));const g=data.games.find(x=>x.id===id);if(g)g.likes=r.likes;if(r.already)toast('이미 기대돼요를 눌렀어요');render();}catch(e){toast(e.message);}});
+  root.querySelectorAll('[data-es]').forEach(b=>b.onclick=()=>editSched(data.schedule.find(x=>x.id===+b.dataset.es)));
+  root.querySelectorAll('[data-ds]').forEach(b=>b.onclick=()=>confirmDo('이 일정을 지울까요?',async()=>{await api(`/channels/${slug}/schedule/${b.dataset.ds}`,{method:'DELETE',key:key()});toast('지웠어요');loadMonth();loadNext();}));
+  root.querySelectorAll('[data-dg]').forEach(b=>b.onclick=()=>confirmDo('이 시청자 글을 지울까요? 되돌릴 수 없어요.',async()=>{await api(`/channels/${slug}/games/${b.dataset.dg}`,{method:'DELETE',key:key()});toast('지웠어요');loadMonth();}));
+  root.querySelectorAll('[data-pin]').forEach(b=>b.onclick=async()=>{try{await api(`/channels/${slug}/games/${b.dataset.pin}`,{method:'PATCH',key:key(),body:{pinned:+b.dataset.p}});toast(+b.dataset.p?'고정했어요. 시청자에게 📌로 보여요':'고정을 풀었어요');loadMonth();}catch(e){toast(e.message);}});
+}
+function confirmDo(msg,fn){modal(`<h3>확인</h3><p class="lead" style="margin:0 0 16px">${esc(msg)}</p><div class="row"><button class="btn g" id="cNo">취소</button><button class="btn p" id="cYes">지우기</button></div>`,c=>{c.querySelector('#cNo').onclick=closeModal;c.querySelector('#cYes').onclick=async()=>{try{await fn();closeModal();}catch(e){toast(e.message);}};});}
+function seg(name,kinds,colors,curv){return `<div class="seg" data-seg="${name}">${kinds.map(k=>`<button type="button" style="--k:${colors[k]}" aria-pressed="${k===curv}" data-v="${esc(k)}">${esc(k)}</button>`).join('')}</div>`;}
+function bindSeg(c){c.querySelectorAll('[data-seg]').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>s.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))));}
+const segVal=(c,n)=>{const b=c.querySelector(`[data-seg="${n}"] [aria-pressed="true"]`);return b?b.dataset.v:'';};
+function editSched(x){
+  x=x||{};const isNew=!x.id;
+  modal(`<h3>${isNew?'방송 일정 올리기':'일정 고치기'}</h3>
+   <div class="fld"><label class="f">종류</label>${seg('kind',Object.keys(KS),KS,x.kind||'방송')}</div>
+   <div class="row fld"><div><label class="f" for="sDate">날짜</label><input class="in" type="date" id="sDate" value="${esc(x.date||sel)}"></div><div><label class="f" for="sTime">시작 시간</label><input class="in" type="time" id="sTime" value="${esc(x.time||'20:00')}"></div></div>
+   <div class="fld"><label class="f" for="sTitle">제목</label><input class="in" id="sTitle" maxlength="60" value="${esc(x.title||'')}" placeholder="예: 썩은 핀볼 시청자 참여판"></div>
+   <div class="fld"><label class="f" for="sNote">메모 (선택)</label><textarea class="in" id="sNote" maxlength="300" placeholder="예: 합방 멤버, 참여 방법">${esc(x.note||'')}</textarea></div>
+   ${isNew?`<label class="f" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" id="sRep"> 4주 동안 매주 같은 요일에 반복</label>`:''}
+   <p class="err" id="sErr"></p><div class="row"><button class="btn g" id="sNo">취소</button><button class="btn" id="sOk">${isNew?'올리기':'저장'}</button></div>`,c=>{
+    bindSeg(c);c.querySelector('#sNo').onclick=closeModal;
+    c.querySelector('#sOk').onclick=async()=>{const b=c.querySelector('#sOk');b.disabled=true;
+      const body={kind:segVal(c,'kind'),date:c.querySelector('#sDate').value,time:c.querySelector('#sTime').value,title:c.querySelector('#sTitle').value,note:c.querySelector('#sNote').value};
+      try{
+        if(isNew){const n=c.querySelector('#sRep')&&c.querySelector('#sRep').checked?4:1;for(let i=0;i<n;i++){const d=parse(body.date);d.setDate(d.getDate()+7*i);await api(`/channels/${slug}/schedule`,{method:'POST',key:key(),body:{...body,date:ymd(d)}});}toast(n>1?'4주치 일정을 올렸어요':'일정을 올렸어요');}
+        else{await api(`/channels/${slug}/schedule/${x.id}`,{method:'PATCH',key:key(),body});toast('저장했어요');}
+        sel=body.date;const d=parse(sel);cur=new Date(d.getFullYear(),d.getMonth(),1);closeModal();loadMonth();loadNext();
+      }catch(e){c.querySelector('#sErr').textContent=e.message;b.disabled=false;}};
+  });
+}
+function shareGame(date){
+  modal(`<h3>게임 출시일·이벤트 공유</h3>
+   <div class="fld"><label class="f">종류</label>${seg('kind',Object.keys(KG),KG,'출시')}</div>
+   <div class="fld"><label class="f" for="gDate">날짜</label><input class="in" type="date" id="gDate" value="${esc(date)}"></div>
+   <div class="fld"><label class="f" for="gTitle">게임 이름</label><input class="in" id="gTitle" maxlength="60" placeholder="예: 몬스터헌터 와일즈 대형 업데이트"></div>
+   <div class="row fld"><div><label class="f" for="gNick">내 닉네임</label><input class="in" id="gNick" maxlength="20" value="${esc(store.get('pl.cal.nick')||'')}" placeholder="익명"></div><div><label class="f" for="gLink">출처 링크 (선택)</label><input class="in" id="gLink" maxlength="300" placeholder="https://"></div></div>
+   <div class="fld"><label class="f" for="gNote">한마디 (선택)</label><input class="in" id="gNote" maxlength="200" placeholder="예: 방송에서 같이 해요!"></div>
+   <p class="hint">확인된 일정만 올려주세요. 출처 링크가 있으면 다른 시청자가 믿고 볼 수 있어요.</p>
+   <p class="err" id="gErr"></p><div class="row"><button class="btn g" id="gNo">취소</button><button class="btn c" id="gOk">공유하기</button></div>`,c=>{
+    bindSeg(c);c.querySelector('#gNo').onclick=closeModal;
+    c.querySelector('#gOk').onclick=async()=>{const b=c.querySelector('#gOk');b.disabled=true;const nick=c.querySelector('#gNick').value.trim();store.set('pl.cal.nick',nick);
+      const body={kind:segVal(c,'kind'),date:c.querySelector('#gDate').value,title:c.querySelector('#gTitle').value,nick,link:c.querySelector('#gLink').value.trim(),note:c.querySelector('#gNote').value};
+      try{await api(`/channels/${slug}/games`,{method:'POST',body});toast('공유했어요! 스트리머가 볼 수 있어요');sel=body.date;const d=parse(sel);cur=new Date(d.getFullYear(),d.getMonth(),1);closeModal();loadMonth();}
+      catch(e){c.querySelector('#gErr').textContent=e.message;b.disabled=false;}};
+  });
+}
+function login(){
+  modal(`<h3>스트리머 로그인</h3><div class="fld"><label class="f" for="kIn">관리 키</label><input class="in" id="kIn" autocomplete="off" placeholder="달력 만들 때 받은 키"></div><p class="err" id="kErr"></p><div class="row"><button class="btn g" id="kNo">취소</button><button class="btn" id="kOk">로그인</button></div>`,c=>{
+    c.querySelector('#kNo').onclick=closeModal;
+    const go=async()=>{const k=c.querySelector('#kIn').value.trim();try{const r=await api(`/channels/${slug}/verify`,{method:'POST',key:k});if(!r.ok)throw new Error('관리 키가 맞지 않아요');store.set('pl.cal.key.'+slug,k);location.reload();}catch(e){c.querySelector('#kErr').textContent=e.message;}};
+    c.querySelector('#kOk').onclick=go;c.querySelector('#kIn').addEventListener('keydown',e=>{if(e.key==='Enter')go();});});
+}
+function settings(){
+  modal(`<h3>달력 설정</h3><div class="fld"><label class="f" for="eName">방송 이름</label><input class="in" id="eName" maxlength="30" value="${esc(CH.name)}"></div>
+   <div class="fld"><label class="f" for="eSoop">방송국 링크</label><input class="in" id="eSoop" maxlength="200" value="${esc(CH.soop||'')}" placeholder="https://"></div>
+   <div class="fld"><label class="f">관리 링크 (다른 기기용 · 남에게 보내지 마세요)</label><button class="btn g sm" id="eAdm">관리 링크 복사</button></div>
+   <p class="err" id="eErr"></p><div class="row"><button class="btn g" id="eNo">닫기</button><button class="btn" id="eOk">저장</button></div>`,c=>{
+    c.querySelector('#eNo').onclick=closeModal;c.querySelector('#eAdm').onclick=()=>copy(location.origin+location.pathname+'?c='+slug+'#k='+key(),'관리 링크를 복사했어요');
+    c.querySelector('#eOk').onclick=async()=>{try{CH=Object.assign(CH,await api('/channels/'+slug,{method:'PATCH',key:key(),body:{name:c.querySelector('#eName').value,soop:c.querySelector('#eSoop').value.trim()}}));closeModal();shell();render();loadNext();toast('저장했어요');}catch(e){c.querySelector('#eErr').textContent=e.message;}};});
+}
+function ovInfo(){
+  const u=location.origin+location.pathname+'?c='+slug+'&o=1';
+  modal(`<h3>OBS에 일정 띄우기</h3><p class="lead" style="margin:0 0 12px">OBS → 소스 추가 → <b>브라우저</b>를 고르고 아래 주소를 넣으세요. 너비 450, 높이 400이면 딱 맞아요. 배경은 투명이라 방송 화면 위에 바로 얹혀요.</p>
+   <div class="row fld"><input class="in" readonly value="${esc(u)}"><button class="btn" id="oCp" style="flex:none">복사</button></div><p class="hint">일정을 고치면 위젯도 1분 안에 바뀌어요.</p><div class="row" style="margin-top:12px"><a class="btn g" href="${esc(u)}" target="_blank">미리보기</a><button class="btn g" id="oNo">닫기</button></div>`,c=>{c.querySelector('#oCp').onclick=()=>copy(u,'위젯 주소를 복사했어요');c.querySelector('#oNo').onclick=closeModal;});
+}
+
+/* 다음 방송 카운트다운 */
+let nextItem=null;
+function renderNext(list){
+  const now=new Date();nextItem=(list||[]).find(x=>x.kind!=='휴방'&&(!x.time?x.date>=today():new Date(x.date+'T'+x.time)>new Date(now-3*3600e3)))||null;
+  const el=$('#next');if(!el)return;el.hidden=!nextItem;if(!nextItem)return;
+  el.innerHTML=`<div class="live">다음<br>방송</div><div><h3>${esc(nextItem.title)}</h3><p>${fmtD(nextItem.date)}${nextItem.time?' '+esc(nextItem.time):''} · ${esc(nextItem.kind)}</p></div><div class="cd" id="cd"></div>`;tickCd();
+}
+function tickCd(){
+  const el=$('#cd');if(!el||!nextItem)return;
+  if(!nextItem.time){el.innerHTML=nextItem.date===today()?'오늘!<small>시간 미정</small>':`D-${Math.round((parse(nextItem.date)-parse(today()))/864e5)}<small>시간 미정</small>`;return;}
+  const ms=new Date(nextItem.date+'T'+nextItem.time)-new Date();
+  if(ms<=0){el.innerHTML='방송 중일 수도!<small>방송국에 들러보세요</small>';return;}
+  const d=Math.floor(ms/864e5),hh=Math.floor(ms/36e5)%24,mm=Math.floor(ms/6e4)%60,ss=Math.floor(ms/1e3)%60;
+  el.innerHTML=(d?`${d}일 `:'')+`${pad(hh)}:${pad(mm)}:${pad(ss)}<small>남았어요</small>`;
+}
+
+/* OBS 위젯 */
+async function overlay(){
+  document.body.classList.add('ov');document.documentElement.style.background='transparent';
+  const draw=async()=>{try{const [c,u]=await Promise.all([api('/channels/'+slug),api(`/channels/${slug}/upcoming?today=${today()}`)]);
+    const L=u.schedule.slice(0,5);
+    $('#ovbox').innerHTML=`<h4>${esc(c.name)} · 다가오는 방송</h4>`+(L.length?L.map(x=>{const d=parse(x.date);return `<div class="ovrow"><div class="d">${d.getMonth()+1}/${d.getDate()} (${DOW[d.getDay()]})<small>${x.time?esc(x.time):'시간 미정'}</small></div><div class="tt"><em style="--k:${KS[x.kind]}">${esc(x.kind)}</em>${esc(x.title)}</div></div>`;}).join(''):'<div class="ovrow"><div class="tt" style="grid-column:1/-1;color:#b9b0d6">예정된 방송이 없어요</div></div>');
+  }catch(e){$('#ovbox').innerHTML=`<h4>달력을 불러오지 못했어요</h4>`;}};
+  draw();setInterval(draw,60000);
+}
+
+if(!slug)landing();else if(OV)overlay();else channel();
+})();
+</script>
+</body>
+</html>

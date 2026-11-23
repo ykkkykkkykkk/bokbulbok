@@ -306,6 +306,7 @@ function playCrack() {
 const SAND = ['#e8c88a', '#d8b47a', '#a87c45', '#6b4a26'];
 // collisionStart 안에서 바꾼 속도·힘은 같은 스텝의 충돌 해소/힘 초기화에 덮여 사라진다 → 스텝이 끝난 뒤 적용
 let pendingHits = [];
+let plRider = false, plSabak = false;
 const SUBSTEPS = 2;
 const BUMPER_MAX = 16;   // 범퍼가 튕겨내는 최고 속도 (px / 16.7ms)
 const BALL_MAX = 26;     // 공 최고 속도 — 얇은 벽(14px) 터널링 방지
@@ -703,7 +704,7 @@ function tick(dt, now) {
       else setState('ready');
     }
 
-    if (state === 'running' && $('rider').checked) updateRider(dt, now);
+    if (state === 'running' && ($('rider').checked || plRider)) updateRider(dt, now);
     else if (riders.length || riderWarn) { removeRiders(); riderWarn = null; stopEngineSound(); }
     updateSabak(dt, decisive);
 
@@ -901,12 +902,12 @@ function endSabak() {
   sabak = null; quake = {x:0, y:0}; stopRumble();
 }
 function updateSabak(dt, dec) {
-  if (state !== 'running' || !$('sabakOn').checked) { if (sabak) endSabak(); return; }
+  if (state !== 'running' || (!$('sabakOn').checked && !plSabak)) { if (sabak) endSabak(); return; }
   const now = performance.now();
   if (rumble && !$('sound').checked) stopRumble();
   if (!sabak) {
     if (!riders.length && !riderWarn && !dec && now > nextSabakAt && balls.length >= 2) {
-      sabak = {t:0, kick:0, gust:0, slam:false};
+      sabak = {t:0, kick:0, gust:0, slam:false}; plSabak = false;
       startRumble();
       beep(70, .6, 'sawtooth', .25);
       shake();
@@ -1104,6 +1105,7 @@ function drawSabak(c) {
 }
 function updateRider(dt, now) {
   if (!sabak && !riders.length && !riderWarn && !decisive && now > nextRiderAt && balls.length >= 2) {
+    plRider = false;
     const ranked = LANES.map(y => ({y, n: balls.filter(b => Math.abs(b.position.y - y) < 150).length}))
       .sort((a, b) => b.n - a.n);
     const l1 = ranked[0].y, l2 = ranked[1].y;
@@ -1644,6 +1646,60 @@ try {
 } catch (e) {}
 applyBgmVol();
 
+
+/* ---------- 방송 모드 연결 (assets/live.js) ---------- */
+window.PL_GAME = {
+  id: 'pinball', screen: cab, resultShowing: () => $('winner').classList.contains('show'),
+  tiers: [
+    {id:'ball', n:10, label:'내 이름 공 추가'},
+    {id:'rider', n:30, label:'달달 라이더 출동'},
+    {id:'sabak', n:50, label:'썩박궤 소환'},
+    {id:'launch', n:100, label:'지목한 공 하늘로', target:true},
+  ],
+  participants: () => [...new Set(balls.map(b => b.plugin.name))],
+  run(id, o) {
+    const now = performance.now();
+    if (id === 'ball') {
+      if (state === 'done') return 'later';
+      const n = o.mult || 1;
+      for (let k = 0; k < n; k++) {
+        const b = smoothCircle(rand(60, 540), state === 'running' ? rand(30, 90) : rand(26, 96), R, {
+          restitution:.5, friction:.03, frictionAir:.003, density:.002, label:'ball', collisionFilter:{category:2, mask:0xFFFF}});
+        b.plugin = {name:o.donor, color:PALETTE[(balls.length + finished.length) % PALETTE.length], trail:[], idx:balls.length + finished.length, still:0};
+        Composite.add(world, b); balls.push(b);
+        burst(b.position, 14, '#ffd400', 5);
+      }
+      texts.push({x:300, y:150, text:'+' + n + ' 공', sub:o.donor, color:'#ffd400', life:1.2});
+      updateCount(); renderResults();
+      return true;
+    }
+    if (state !== 'running') return 'later';
+    if (id === 'rider') { plRider = true; nextRiderAt = 0; return true; }
+    if (id === 'sabak') { plSabak = true; nextSabakAt = 0; return true; }
+    if (id === 'launch') {
+      const bs = balls.filter(b => b.plugin.name === o.target);
+      if (!bs.length) return true;
+      for (const b of bs) {
+        Body.setPosition(b, {x:b.position.x, y:Math.max(GATE_Y + 30, b.position.y - 60)});
+        Body.setVelocity(b, {x:rand(-6, 6), y:-26 * (o.mult > 1 ? 1.3 : 1)});
+        b.plugin.punchT = now; burst(b.position, 24, b.plugin.color, 8);
+        texts.push({x:b.position.x, y:b.position.y - 40, text:'슈우웅!', sub:o.donor + '님이 날림', color:'#ff2d95', life:1.2});
+      }
+      shake(); beep(220, .3, 'sawtooth', .12); setTimeout(() => beep(880, .25, 'square', .1), 120);
+      return true;
+    }
+    return true;
+  },
+  join(names) {
+    const cur = parseNames().map(e => e.name);
+    const add = names.filter(n => !cur.includes(n));
+    if (!add.length) return 0;
+    const v = $('names').value.trim();
+    $('names').value = (v ? v.replace(/[,\s]+$/, '') + ', ' : '') + add.join(', ');
+    if (state === 'ready' || state === 'done') build();
+    return add.length;
+  },
+};
 resize();
 build();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => buildPrerender());
@@ -1651,6 +1707,7 @@ try { document.fonts.load('400 40px "Jua"').catch(() => {}); } catch (e) {}
 requestAnimationFrame(loop);
 })();
 </script>
+<script src="assets/live.js"></script>
 <a href="./" style="position:fixed;right:12px;bottom:12px;z-index:9999;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:700 13px 'Noto Sans KR',sans-serif;text-decoration:none;border:1px solid rgba(255,255,255,.25)">← 게임 목록</a>
 </body>
 </html>
